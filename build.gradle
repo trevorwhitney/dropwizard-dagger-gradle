@@ -1,0 +1,55 @@
+buildscript {
+    ext {
+        dropwizardVersion = '1.0.5'
+        daggerVersion = '1.2.5'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+group = 'com.trevorwhitney.helloworld'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "io.dropwizard:dropwizard-core:$dropwizardVersion"
+    compile "com.squareup.dagger:dagger:$daggerVersion"
+    compile "com.squareup.dagger:dagger-compiler:$daggerVersion"
+}
+
+// The main class of the application
+mainClassName = 'com.trevorwhitney.helloworld.ApplicationRunner'
+
+// Create the executable jar and exclude some certificates
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": "Dropwizard Hello World Skeleton",
+                "Implementation-Version": version,
+                "Main-Class" : mainClassName,
+                "JVM-Args": run.jvmArgs.join(' '),
+                "System-Properties": run.systemProperties.collect { k, v -> "$k=$v" }.join(' '),
+        )
+    }
+
+    // remove the security files (from mail.jar / activation.jar) so that the jar will be executable.
+    doFirst {
+        from (configurations.runtime.resolve().collect { it.isDirectory() ? it : zipTree(it) }) {
+            exclude 'META-INF/MANIFEST.MF'
+            exclude 'META-INF/*.SF'
+            exclude 'META-INF/*.DSA'
+            exclude 'META-INF/*.RSA'
+        }
+    }
+}
+
+run {
+    systemProperty "dropwizard.config", "src/main/resources/config.yml"
+}
